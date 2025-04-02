@@ -11,7 +11,9 @@ def print_hi(name):
 
 print("test");
 print("test");
-print("test");
-print("test");
-
+print("testi ma i miri");
+print("testi ma i miri");
+print("Ssafasf");
+print("Ssafasf");
+print("test1");
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
