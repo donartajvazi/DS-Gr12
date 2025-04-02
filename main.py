@@ -14,4 +14,5 @@ print("test");
 print("testi ma i miri");
 print("Ssafasf");
 print("Ssafasf");
+print("test2");
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
