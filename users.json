@@ -1,7 +1,20 @@
 [
     {
-        "email": "q@gmail.com",
-        "password": "q12345678",
-        "totp_secret": "BG7KVLQVFXQR7J5O27LLC7I5UBHXATUB"
+        "email": "d@gmail.com",
+        "password": "d1234567",
+        "totp_secret": "GPNFVOQKPEVOEIANTKSUFRVKSWTF7JTJ",
+        "hardware_token": "GPNFVOQKPEVOEIANTKSUFRVKSWTF7JTJ"
+    },
+    {
+        "email": "d7@gmail.com",
+        "password": "d7654321",
+        "totp_secret": "Q5V3B5GKUUIWRRZVXNQGJ6D6OBYCR63W",
+        "hardware_token": "Q5V3B5GKUUIWRRZVXNQGJ6D6OBYCR63W"
+    },
+    {
+        "email": "dion@gmail.com",
+        "password": "scrypt:32768:8:1$PRm0kwKUTi0iBeIj$36ae9e9f16b9b44bd6f9d0ae8f92d578918059bacd07b7ba9f899098ec420cbedf88df9c2b8bd271b17314b3ff6b523c1aa54e530960da600b58d449d6687adc",
+        "totp_secret": "MEY5NRSUOC2LH5NJX6JN6JLYUNCSTFYE",
+        "hardware_token": "MEY5NRSUOC2LH5NJX6JN6JLYUNCSTFYE"
     }
 ]
