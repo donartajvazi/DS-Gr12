@@ -6,17 +6,15 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 
-DATABASE_FILE = 'users.json'
+DATABASE_FILE = 'users.txt'
 users = []
 
-# Funksion ndihmës për gjetjen e userit sipas email
 def find_user(email):
     for user in users:
         if user['email'] == email:
             return user
     return None
 
-# Lexo userat ekzistues nga skedari
 if os.path.exists(DATABASE_FILE):
     with open(DATABASE_FILE, 'r') as f:
         try:
@@ -25,6 +23,7 @@ if os.path.exists(DATABASE_FILE):
             users = []
 
 @app.route('/')
+@app.route('/index1')
 def index():
     return render_template('index1.html')
 
@@ -43,7 +42,7 @@ def register():
         'email': email,
         'password': hashed_password,
         'totp_secret': totp.secret,
-        'hardware_token': None  # fillimi pa hardware token
+        'hardware_token': None
     }
 
     users.append(new_user)
@@ -78,7 +77,7 @@ def setup_totp():
 def verify_2fa():
     email = request.form['email']
     code = request.form['code']
-    method = request.form['method']  # 'totp' ose 'hardware'
+    method = request.form['method']
 
     user = find_user(email)
     if not user:
@@ -92,7 +91,6 @@ def verify_2fa():
             return jsonify({"message": "Invalid TOTP code"}), 400
 
     elif method == 'hardware':
-        # Hardware token thjesht kontrollon nese kodi eshte i barabarte me token-in e ruajtur
         if user['hardware_token'] and code == user['hardware_token']:
             return jsonify({"message": "2FA verified successfully"})
         else:
@@ -120,7 +118,6 @@ def register_hardware_token():
 @app.route('/dashboard')
 def dashboard():
     return render_template('dashboard.html')
-
 
 if __name__ == '__main__':
     app.run(debug=True)

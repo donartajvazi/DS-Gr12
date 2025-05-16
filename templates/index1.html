@@ -145,13 +145,7 @@
             if (res.message === "Registration successful") {
                 showAlert("Registration successful", "success");
                 currentEmail = email;
-                $('#twoFactorModal').modal('show');
 
-                setTimeout(() => {
-                    if ($('input[name="fa_method"]:checked').val() === 'totp') {
-                        $("#setupTOTPBtn").click();
-                    }
-                }, 500);
             } else {
                 showAlert(res.message, "danger");
             }

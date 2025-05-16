@@ -32,15 +32,16 @@
     <div class="box">
         <h2>✅ Login me sukses!</h2>
         <p>Mirësevini në sistemin tuaj.</p>
-        <form action="/logout" method="POST">
-            <button type="submit" onclick="logout()">Dil</button>
-        </form>
+        <button onclick="logout()">Dil</button>
     </div>
- <script>
-    function logout() {
-        // Kthehu te login/register (index1.html)
-        window.location.href = "/index1.html";
-    }
-</script>
+
+    <script>
+        function logout() {
+            setTimeout(() => {
+                // Nese index1.html eshte ne folderin "templates", shko atje
+                window.location.href = "/index1";
+            }, 1000);
+        }
+    </script>
 </body>
 </html>
