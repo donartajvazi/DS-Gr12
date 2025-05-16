@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify, render_template
 import pyotp
 import json
 import os
+import random
+import string
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
@@ -15,12 +17,17 @@ def find_user(email):
             return user
     return None
 
+# Load existing users
 if os.path.exists(DATABASE_FILE):
     with open(DATABASE_FILE, 'r') as f:
         try:
             users = json.load(f)
         except json.JSONDecodeError:
             users = []
+
+# 🔐 Funksion për gjenerimin e një hardware token (rastësor)
+def generate_hardware_token(length=8):
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
 @app.route('/')
 @app.route('/index1')
@@ -37,12 +44,13 @@ def register():
 
     hashed_password = generate_password_hash(password)
     totp = pyotp.TOTP(pyotp.random_base32())
+    hardware_token = generate_hardware_token()
 
     new_user = {
         'email': email,
         'password': hashed_password,
         'totp_secret': totp.secret,
-        'hardware_token': None
+        'hardware_token': hardware_token
     }
 
     users.append(new_user)
@@ -50,7 +58,11 @@ def register():
     with open(DATABASE_FILE, 'w') as f:
         json.dump(users, f, indent=4)
 
-    return jsonify({"message": "Registration successful", "totp_secret": totp.secret})
+    return jsonify({
+        "message": "Registration successful",
+        "totp_secret": totp.secret,
+        "hardware_token": hardware_token  # opsionale, vetëm për shfaqje/testim
+    })
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -65,7 +77,6 @@ def login():
 @app.route('/setup_totp', methods=['POST'])
 def setup_totp():
     email = request.form['email']
-
     user = find_user(email)
     if user:
         totp = pyotp.TOTP(user['totp_secret'])
@@ -91,29 +102,12 @@ def verify_2fa():
             return jsonify({"message": "Invalid TOTP code"}), 400
 
     elif method == 'hardware':
-        if user['hardware_token'] and code == user['hardware_token']:
+        if code == user['hardware_token']:
             return jsonify({"message": "2FA verified successfully"})
         else:
             return jsonify({"message": "Invalid hardware token code"}), 400
 
-    else:
-        return jsonify({"message": "Invalid 2FA method"}), 400
-
-@app.route('/register_hardware_token', methods=['POST'])
-def register_hardware_token():
-    email = request.form['email']
-    hardware_token = request.form['hardware_token']
-
-    user = find_user(email)
-    if not user:
-        return jsonify({"message": "User not found"}), 404
-
-    user['hardware_token'] = hardware_token
-
-    with open(DATABASE_FILE, 'w') as f:
-        json.dump(users, f, indent=4)
-
-    return jsonify({"message": "Hardware token registered successfully"})
+    return jsonify({"message": "Invalid 2FA method"}), 400
 
 @app.route('/dashboard')
 def dashboard():
