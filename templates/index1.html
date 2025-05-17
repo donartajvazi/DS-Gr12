@@ -13,6 +13,14 @@
             max-width: 600px;
             margin-top: 50px;
         }
+        #emailCodeSection {
+            display: none;
+        }
+        #qrcode {
+            width: 200px;
+            height: 200px;
+            margin: auto;
+        }
     </style>
 </head>
 <body>
@@ -30,11 +38,11 @@
         <div id="login" class="tab-pane fade show active">
             <form id="loginForm">
                 <div class="form-group mt-3">
-                    <label>Email:</label>
+                    <label for="loginEmail">Email:</label>
                     <input type="email" class="form-control" id="loginEmail" required />
                 </div>
                 <div class="form-group">
-                    <label>Password:</label>
+                    <label for="loginPassword">Password:</label>
                     <input type="password" class="form-control" id="loginPassword" required />
                 </div>
                 <button type="submit" class="btn btn-primary">Login</button>
@@ -45,11 +53,11 @@
         <div id="register" class="tab-pane fade">
             <form id="registerForm">
                 <div class="form-group mt-3">
-                    <label>Email:</label>
+                    <label for="registerEmail">Email:</label>
                     <input type="email" class="form-control" id="registerEmail" required />
                 </div>
                 <div class="form-group">
-                    <label>Password:</label>
+                    <label for="registerPassword">Password:</label>
                     <input type="password" class="form-control" id="registerPassword" required />
                 </div>
                 <button type="submit" class="btn btn-primary">Register</button>
@@ -58,28 +66,30 @@
     </div>
 
     <!-- Modal 2FA -->
-    <div class="modal fade" id="twoFactorModal">
+    <div class="modal fade" id="twoFactorModal" tabindex="-1" role="dialog" aria-labelledby="twoFactorModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Enable 2FA</h5>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h5 class="modal-title">Two-Factor Authentication</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" id="close2FAModalBtn">&times;</button>
                 </div>
                 <div class="modal-body">
+                    <p>Select 2FA method:</p>
                     <label><input type="radio" name="fa_method" value="totp" checked /> TOTP (Google Authenticator)</label><br />
-                    <label><input type="radio" name="fa_method" value="hardware" /> Hardware Token</label><br /><br />
+                    <label><input type="radio" name="fa_method" value="email" /> Email Code</label><br /><br />
 
                     <div id="totp_section">
                         <button class="btn btn-secondary" id="setupTOTPBtn">Setup TOTP (Google Authenticator)</button>
                         <div id="qrcode" class="mb-3 mt-3"></div>
-                        <input type="text" class="form-control" id="totpCode" placeholder="Enter TOTP code" />
+                        <input type="text" class="form-control" id="totpCode" placeholder="Enter TOTP code" autocomplete="one-time-code" />
                     </div>
 
-                    <div id="hardware_section" style="display:none;">
-                        <input type="text" class="form-control" id="hardwareCode" placeholder="Enter Hardware token code" />
+                    <div id="emailCodeSection">
+                        <button class="btn btn-secondary mb-2" id="sendEmailCodeBtn">Send Code to Email</button>
+                        <input type="text" class="form-control" id="emailCode" placeholder="Enter code received by email" autocomplete="one-time-code" />
                     </div>
 
-                    <button class="btn btn-primary mt-2" id="verify2FABtn">Verify 2FA</button>
+                    <button class="btn btn-primary mt-3" id="verify2FABtn">Verify 2FA</button>
                 </div>
             </div>
         </div>
@@ -88,6 +98,7 @@
 
 <script>
     let currentEmail = '';
+    let qrCodeInstance = null;
 
     function showAlert(message, type = 'success') {
         $('#alertBox').html(`
@@ -100,33 +111,48 @@
         `);
     }
 
+    function clearQRCode() {
+        if (qrCodeInstance) {
+            $('#qrcode').empty();
+            qrCodeInstance = null;
+        }
+    }
+
     // Ndryshimi i shfaqjes bazuar në metodën e zgjedhur
     $('input[name="fa_method"]').change(function () {
         if ($(this).val() === 'totp') {
             $('#totp_section').show();
-            $('#hardware_section').hide();
-        } else {
+            $('#emailCodeSection').hide();
+        } else if ($(this).val() === 'email') {
             $('#totp_section').hide();
-            $('#hardware_section').show();
+            $('#emailCodeSection').show();
         }
     });
 
     $("#loginForm").submit(function (e) {
         e.preventDefault();
-        const email = $("#loginEmail").val();
-        const password = $("#loginPassword").val();
+        const email = $("#loginEmail").val().trim();
+        const password = $("#loginPassword").val().trim();
         currentEmail = email;
 
+        if (!email || !password) {
+            showAlert("Please fill in all fields.", "warning");
+            return;
+        }
+
         $.post("/login", { email, password }, function (res) {
-            if (res.message === "Login successful") {
+            if (res.message.startsWith("Login successful")) {
                 $('#twoFactorModal').modal('show');
 
-                // Automatikisht kliko Setup TOTP për të krijuar QR
-                setTimeout(() => {
-                    if ($('input[name="fa_method"]:checked').val() === 'totp') {
-                        $("#setupTOTPBtn").click();
-                    }
-                }, 500);
+                // Reset inputs and QR code
+                $('#totpCode').val('');
+                $('#emailCode').val('');
+                clearQRCode();
+
+                // Nëse zgjidhet TOTP, klikoj setup për QR code
+                if ($('input[name="fa_method"]:checked').val() === 'totp') {
+                    $("#setupTOTPBtn").click();
+                }
             } else {
                 showAlert(res.message, "danger");
             }
@@ -137,14 +163,18 @@
 
     $("#registerForm").submit(function (e) {
         e.preventDefault();
-        const email = $("#registerEmail").val();
-        const password = $("#registerPassword").val();
+        const email = $("#registerEmail").val().trim();
+        const password = $("#registerPassword").val().trim();
+
+        if (!email || !password) {
+            showAlert("Please fill in all fields.", "warning");
+            return;
+        }
 
         $.post("/register", { email, password }, function (res) {
             if (res.message === "Registration successful") {
                 showAlert("Registration successful", "success");
                 currentEmail = email;
-
             } else {
                 showAlert(res.message, "danger");
             }
@@ -155,9 +185,39 @@
 
     // Gjenerimi i QR për TOTP
     $("#setupTOTPBtn").click(function () {
+        if (!currentEmail) {
+            showAlert("No user email found.", "danger");
+            return;
+        }
+
         $.post("/setup_totp", { email: currentEmail }, function (res) {
-            $('#qrcode').empty();
-            new QRCode(document.getElementById("qrcode"), res.qr_url);
+            clearQRCode();
+            qrCodeInstance = new QRCode(document.getElementById("qrcode"), {
+                text: res.qr_url,
+                width: 200,
+                height: 200,
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }).fail(function (xhr) {
+            showAlert(xhr.responseJSON?.message || "Failed to setup TOTP", "danger");
+        });
+    });
+
+    // Dërgo kodin në email (email 2FA)
+    $("#sendEmailCodeBtn").click(function () {
+        if (!currentEmail) {
+            showAlert("No user email found.", "danger");
+            return;
+        }
+
+        $.post("/send_email_code", { email: currentEmail }, function (res) {
+            if (res.message === "Code sent") {
+                showAlert("Verification code sent to your email.", "success");
+            } else {
+                showAlert(res.message, "danger");
+            }
+        }).fail(function () {
+            showAlert("Failed to send email code.", "danger");
         });
     });
 
@@ -166,13 +226,18 @@
         const method = $('input[name="fa_method"]:checked').val();
         let code = '';
         if (method === 'totp') {
-            code = $("#totpCode").val();
-        } else {
-            code = $("#hardwareCode").val();
+            code = $("#totpCode").val().trim();
+        } else if (method === 'email') {
+            code = $("#emailCode").val().trim();
+        }
+
+        if (!code) {
+            showAlert("Please enter the verification code.", "warning");
+            return;
         }
 
         $.post("/verify_2fa", { email: currentEmail, code, method }, function (res) {
-            if (res.message === "2FA verified successfully") {
+            if (res.message.includes("2FA verified successfully")) {
                 showAlert("Login successful", "success");
                 $('#twoFactorModal').modal('hide');
                 setTimeout(() => {
@@ -186,19 +251,17 @@
         });
     });
 
-    // Regjistrimi i Hardware Token
-    $("#registerHardwareBtn").click(function () {
-        const hardwareToken = $("#hardwareCode").val();
-        if (!hardwareToken) {
-            showAlert("Enter hardware token code", "warning");
-            return;
+    // Parandalon mbylljen e modales kur është e hapur derisa të verifikohet 2FA
+    $('#twoFactorModal').on('hide.bs.modal', function (e) {
+        if (!$('#alertBox').find('.alert-success').length) {
+            e.preventDefault();
+            showAlert("Please complete 2FA verification to proceed.", "warning");
         }
+    });
 
-        $.post("/register_hardware_token", { email: currentEmail, hardware_token: hardwareToken }, function (res) {
-            showAlert(res.message, "success");
-        }).fail(function (xhr) {
-            showAlert(xhr.responseJSON?.message || "Hardware token registration failed", "danger");
-        });
+    // Mundëson mbylljen e modales me butonin X vetëm pas verifikimit
+    $('#close2FAModalBtn').click(function() {
+        $('#twoFactorModal').modal('hide');
     });
 </script>
 </body>

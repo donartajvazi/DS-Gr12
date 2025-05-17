@@ -3,13 +3,18 @@ import pyotp
 import json
 import os
 import random
-import string
 from werkzeug.security import generate_password_hash, check_password_hash
+import smtplib
+from email.message import EmailMessage
 
 app = Flask(__name__)
 
 DATABASE_FILE = 'users.txt'
 users = []
+
+def save_users():
+    with open(DATABASE_FILE, 'w') as f:
+        json.dump(users, f, indent=4)
 
 def find_user(email):
     for user in users:
@@ -24,10 +29,6 @@ if os.path.exists(DATABASE_FILE):
             users = json.load(f)
         except json.JSONDecodeError:
             users = []
-
-# 🔐 Funksion për gjenerimin e një hardware token (rastësor)
-def generate_hardware_token(length=8):
-    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
 @app.route('/')
 @app.route('/index1')
@@ -44,24 +45,19 @@ def register():
 
     hashed_password = generate_password_hash(password)
     totp = pyotp.TOTP(pyotp.random_base32())
-    hardware_token = generate_hardware_token()
 
     new_user = {
         'email': email,
         'password': hashed_password,
-        'totp_secret': totp.secret,
-        'hardware_token': hardware_token
+        'totp_secret': totp.secret
     }
 
     users.append(new_user)
-
-    with open(DATABASE_FILE, 'w') as f:
-        json.dump(users, f, indent=4)
+    save_users()
 
     return jsonify({
         "message": "Registration successful",
-        "totp_secret": totp.secret,
-        "hardware_token": hardware_token  # opsionale, vetëm për shfaqje/testim
+        "totp_secret": totp.secret
     })
 
 @app.route('/login', methods=['POST'])
@@ -71,8 +67,25 @@ def login():
 
     user = find_user(email)
     if user and check_password_hash(user['password'], password):
+        # Vetem konfirmim login, 2FA do behet me vone
         return jsonify({"message": "Login successful"})
     return jsonify({"message": "Invalid credentials"}), 401
+
+@app.route('/send_email_code', methods=['POST'])
+def send_email_code():
+    email = request.form['email']
+    user = find_user(email)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    verification_code = str(random.randint(100000, 999999))
+    user['pending_code'] = verification_code
+    save_users()
+
+    if send_verification_code(email, verification_code):
+        return jsonify({"message": "Code sent"})
+    else:
+        return jsonify({"message": "Failed to send email code"}), 500
 
 @app.route('/setup_totp', methods=['POST'])
 def setup_totp():
@@ -101,14 +114,36 @@ def verify_2fa():
         else:
             return jsonify({"message": "Invalid TOTP code"}), 400
 
-    elif method == 'hardware':
-        if code == user['hardware_token']:
-            return jsonify({"message": "2FA verified successfully"})
+    elif method == 'email':
+        if 'pending_code' in user and code == user['pending_code']:
+            del user['pending_code']
+            save_users()
+            return jsonify({"message": "2FA verified successfully via email"})
         else:
-            return jsonify({"message": "Invalid hardware token code"}), 400
+            return jsonify({"message": "Invalid email verification code"}), 400
 
     return jsonify({"message": "Invalid 2FA method"}), 400
 
+
+def send_verification_code(to_email, code):
+    EMAIL_ADDRESS = "qetu duhet me qit emailin qe ka me dergu kodin"
+    EMAIL_PASSWORD = "kodi 16 shifror prej google app password"
+
+    msg = EmailMessage()
+    msg['Subject'] = 'Kodi juaj i verifikimit'
+    msg['From'] = EMAIL_ADDRESS
+    msg['To'] = to_email
+    msg.set_content(f'Kodi juaj i verifikimit është: {code}')
+
+    try:
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+            smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+            smtp.send_message(msg)
+        print("Email u dërgua me sukses!")
+        return True
+    except Exception as e:
+        print(f'Dështoi dërgimi i emailit: {e}')
+        return False
 @app.route('/dashboard')
 def dashboard():
     return render_template('dashboard.html')
