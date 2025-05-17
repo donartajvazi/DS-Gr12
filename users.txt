@@ -1,0 +1,8 @@
+[
+    {
+        "email": "q@gmail.com",
+        "password": "scrypt:32768:8:1$Wa92F9oory8iRvne$0dc1435fc672a080e411c647a7a651d81330b4088dc0569f75c4423441952ee760cb1a120d9b0d10da547fcae95a4b4106858143aa62f5efeb35f326733de315",
+        "totp_secret": "OF74KIDQFWGOUL52ANICBCBTEM4NHQQQ",
+        "hardware_token": "ZO7Z8FAK"
+    }
+]
