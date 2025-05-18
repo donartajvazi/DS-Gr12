@@ -8,15 +8,15 @@
     #emailCodeSection {
       display: none;
     }
-        .container {
-            max-width: 600px;
-            margin-top: 50px;
-        }
-        #qrcode {
-            width: 200px;
-            height: 200px;
-            margin: auto;
-        }
+    .container {
+        max-width: 600px;
+        margin-top: 50px;
+    }
+    #qrcode {
+       width: 200px;
+       height: 200px;
+       margin: auto;
+    }
   </style>
 </head>
 <body>
@@ -57,7 +57,7 @@
             </form>
         </div>
     </div>
-<!--G2-->
+
 <div class="modal fade" id="twoFactorModal" tabindex="-1" role="dialog" aria-labelledby="twoFactorModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -88,7 +88,6 @@
   </div>
 </div>
 <script>
-  <!--G1-->
     let currentEmail = '';
     let qrCodeInstance = null;
 
@@ -103,7 +102,6 @@
         `);
     }
 
-<!--G1-->
     $("#loginForm").submit(function (e) {
         e.preventDefault();
         const email = $("#loginEmail").val().trim();
@@ -132,7 +130,6 @@
             showAlert(xhr.responseJSON?.message || "Login failed", "danger");
         });
     });
-</script>
 
 
 $("#setupTOTPBtn").click(function () {
@@ -184,5 +181,6 @@ $("#setupTOTPBtn").click(function () {
             showModalAlert(xhr.responseJSON?.message || "Verification failed", "danger");
         });
     });
+</script>
 </body>
 </html>

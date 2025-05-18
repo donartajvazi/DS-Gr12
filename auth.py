@@ -13,6 +13,20 @@ def save_users():
     with open(DATABASE_FILE, 'w') as f:
         json.dump(users, f, indent=4)
 
+def find_user(email):
+    for user in users:
+        if user['email'] == email:
+            return user
+    return None
+
+if os.path.exists(DATABASE_FILE):
+    with open(DATABASE_FILE, 'r') as f:
+        try:
+            users = json.load(f)
+        except json.JSONDecodeError:
+            users = []
+
+
 @app.route('/')
 @app.route('/user_access')
 def user_access():
@@ -62,3 +76,29 @@ def send_email_code():
     if not user:
         return jsonify({"message": "User not found"}), 404
 
+@app.route('/verify_2fa', methods=['POST'])
+def verify_2fa():
+    email = request.form['email']
+    code = request.form['code']
+    method = request.form['method']
+
+    user = find_user(email)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    if method == 'totp':
+        totp = pyotp.TOTP(user['totp_secret'])
+        if totp.verify(code):
+            return jsonify({"message": "2FA verified successfully"})
+        else:
+            return jsonify({"message": "Invalid TOTP code"}), 400
+
+    elif method == 'email':
+        if 'pending_code' in user and code == user['pending_code']:
+            del user['pending_code']
+            save_users()
+            return jsonify({"message": "2FA verified successfully via email"})
+        else:
+            return jsonify({"message": "Invalid email verification code"}), 400
+
+    return jsonify({"message": "Invalid 2FA method"}), 400
