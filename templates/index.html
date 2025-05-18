@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+    <meta charset="UTF-8">
+    <title>2FA System</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f8f8f8;
+            text-align: center;
+            padding-top: 100px;
+        }
+        .box {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            display: inline-block;
+            box-shadow: 0 0 10px rgba(0,0,0,0.15);
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2>✅ Login me sukses!</h2>
+        <p>Mirësevini në sistemin tonë.</p>
+        <button onclick="logout()">Dil</button>
+    </div>
+
+    <script>
+        function logout() {
+            setTimeout(() => {
+                window.location.href = "/user_access";
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
