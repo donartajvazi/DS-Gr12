@@ -54,6 +54,16 @@ def login():
         return jsonify({"message": "Login successful"})
     return jsonify({"message": "Invalid credentials"}), 401
 
+@app.route('/setup_totp', methods=['POST'])
+def setup_totp():
+    email = request.form['email']
+    user = find_user(email)
+    if user:
+        totp = pyotp.TOTP(user['totp_secret'])
+        qr_url = totp.provisioning_uri(name=email, issuer_name="MyApp")
+        return jsonify({"qr_url": qr_url})
+    return jsonify({"message": "User not found"}), 404
+
 
 @app.route('/send_email_code', methods=['POST'])
 def send_email_code():
