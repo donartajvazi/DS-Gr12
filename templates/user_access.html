@@ -1,26 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>2FA System</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    #emailCodeSection {
-      display: none;
-    }
+    <meta charset="UTF-8" />
+    <title>2FA System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+    <style>
         .container {
             max-width: 600px;
             margin-top: 50px;
         }
+        #emailCodeSection {
+            display: none;
+        }
+
         #qrcode {
             width: 200px;
             height: 200px;
             margin: auto;
-        }
-  </style>
+        }    </style>
 </head>
 <body>
-<h2>2FA System</h2>
+<div class="container">
+
+    <h2>2FA System</h2>
     <div id="alertBox"></div>
 
     <ul class="nav nav-tabs">
@@ -57,38 +63,40 @@
             </form>
         </div>
     </div>
+    
 <!--G2-->
-<div class="modal fade" id="twoFactorModal" tabindex="-1" role="dialog" aria-labelledby="twoFactorModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Two-Factor Authentication</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close" id="close2FAModalBtn">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div id="modalAlertBox"></div>
-        <p>Select 2FA method:</p>
-        <label><input type="radio" name="fa_method" value="totp" checked /> TOTP (Google Authenticator)</label><br />
-        <label><input type="radio" name="fa_method" value="email" /> Email Code</label><br /><br />
+    <div class="modal fade" id="twoFactorModal" tabindex="-1" role="dialog" aria-labelledby="twoFactorModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Two-Factor Authentication</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" id="close2FAModalBtn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="modalAlertBox"></div>
+                    <p>Select 2FA method:</p>
+                    <label><input type="radio" name="fa_method" value="totp" checked /> TOTP (Google Authenticator)</label><br />
+                    <label><input type="radio" name="fa_method" value="email" /> Email Code</label><br /><br />
 
-        <div id="totp_section">
-          <button class="btn btn-secondary" id="setupTOTPBtn">Setup TOTP (Google Authenticator)</button>
-          <div id="qrcode" class="mb-3 mt-3"></div>
-          <input type="text" class="form-control" id="totpCode" placeholder="Enter TOTP code" autocomplete="one-time-code" />
+                    <div id="totp_section">
+                        <button class="btn btn-secondary" id="setupTOTPBtn">Setup TOTP (Google Authenticator)</button>
+                        <div id="qrcode" class="mb-3 mt-3"></div>
+                        <input type="text" class="form-control" id="totpCode" placeholder="Enter TOTP code" autocomplete="one-time-code" />
+                    </div>
+
+                    <div id="emailCodeSection">
+                        <button class="btn btn-secondary mb-2" id="sendEmailCodeBtn">Send Code to Email</button>
+                        <input type="text" class="form-control" id="emailCode" placeholder="Enter code received by email" autocomplete="one-time-code" />
+                    </div>
+
+                    <button class="btn btn-primary mt-3" id="verify2FABtn">Verify 2FA</button>
+                </div>
+            </div>
         </div>
-
-        <div id="emailCodeSection">
-          <button class="btn btn-secondary mb-2" id="sendEmailCodeBtn">Send Code to Email</button>
-          <input type="text" class="form-control" id="emailCode" placeholder="Enter code received by email" autocomplete="one-time-code" />
-        </div>
-
-        <button class="btn btn-primary mt-3" id="verify2FABtn">Verify 2FA</button>
-      </div>
     </div>
-  </div>
 </div>
+
 <script>
-  <!--G1-->
     let currentEmail = '';
     let qrCodeInstance = null;
 
@@ -103,7 +111,34 @@
         `);
     }
 
-<!--G1-->
+    function showModalAlert(message, type = 'success') {
+        $('#modalAlertBox').html(`
+            <div class="alert alert-${type} alert-dismissible fade show mt-2" role="alert">
+                ${message}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        `);
+    }
+
+    function clearQRCode() {
+        if (qrCodeInstance) {
+            $('#qrcode').empty();
+            qrCodeInstance = null;
+        }
+    }
+
+    $('input[name="fa_method"]').change(function () {
+        if ($(this).val() === 'totp') {
+            $('#totp_section').show();
+            $('#emailCodeSection').hide();
+        } else if ($(this).val() === 'email') {
+            $('#totp_section').hide();
+            $('#emailCodeSection').show();
+        }
+    });
+
     $("#loginForm").submit(function (e) {
         e.preventDefault();
         const email = $("#loginEmail").val().trim();
@@ -132,10 +167,30 @@
             showAlert(xhr.responseJSON?.message || "Login failed", "danger");
         });
     });
-</script>
 
+    $("#registerForm").submit(function (e) {
+        e.preventDefault();
+        const email = $("#registerEmail").val().trim();
+        const password = $("#registerPassword").val().trim();
 
-$("#setupTOTPBtn").click(function () {
+        if (!email || !password) {
+            showAlert("Please fill in all fields.", "warning");
+            return;
+        }
+
+        $.post("/register", { email, password }, function (res) {
+            if (res.message === "Registration successful") {
+                showAlert("Registration successful", "success");
+                currentEmail = email;
+            } else {
+                showAlert(res.message, "danger");
+            }
+        }).fail(function (xhr) {
+            showAlert(xhr.responseJSON?.message || "Registration failed", "danger");
+        });
+    });
+
+    $("#setupTOTPBtn").click(function () {
         if (!currentEmail) {
             showAlert("No user email found.", "danger");
             return;
@@ -153,8 +208,22 @@ $("#setupTOTPBtn").click(function () {
             showAlert(xhr.responseJSON?.message || "Failed to setup TOTP", "danger");
         });
     });
+    $("#sendEmailCodeBtn").click(function () {
+        if (!currentEmail) {
+            showModalAlert("No user email found.", "danger");
+            return;
+        }
 
-
+        $.post("/send_email_code", { email: currentEmail }, function (res) {
+            if (res.message === "Code sent") {
+                showModalAlert("Verification code sent to your email.", "success");
+            } else {
+                showModalAlert(res.message, "danger");
+            }
+        }).fail(function () {
+            showModalAlert("Failed to send email code.", "danger");
+        });
+    });
 
     $("#verify2FABtn").click(function () {
         const method = $('input[name="fa_method"]:checked').val();
@@ -184,5 +253,16 @@ $("#setupTOTPBtn").click(function () {
             showModalAlert(xhr.responseJSON?.message || "Verification failed", "danger");
         });
     });
+    $('#twoFactorModal').on('hide.bs.modal', function (e) {
+        if (!$('#alertBox').find('.alert-success').length) {
+            e.preventDefault();
+            showAlert("Please complete 2FA verification to proceed.", "warning");
+        }
+    });
+
+    $('#close2FAModalBtn').click(function () {
+        $('#twoFactorModal').modal('hide');
+    });
+</script>
 </body>
 </html>
