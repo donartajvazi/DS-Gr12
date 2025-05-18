@@ -1,10 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>2FA System</title>
+  <meta charset="UTF-8" />
+  <title>2FA System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    #emailCodeSection {
+      display: none;
+    }
+  </style>
 </head>
 <body>
+
+<!--G2-->
+<div class="modal fade" id="twoFactorModal" tabindex="-1" role="dialog" aria-labelledby="twoFactorModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Two-Factor Authentication</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" id="close2FAModalBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="modalAlertBox"></div>
+        <p>Select 2FA method:</p>
+        <label><input type="radio" name="fa_method" value="totp" checked /> TOTP (Google Authenticator)</label><br />
+        <label><input type="radio" name="fa_method" value="email" /> Email Code</label><br /><br />
+
+        <div id="totp_section">
+          <button class="btn btn-secondary" id="setupTOTPBtn">Setup TOTP (Google Authenticator)</button>
+          <div id="qrcode" class="mb-3 mt-3"></div>
+          <input type="text" class="form-control" id="totpCode" placeholder="Enter TOTP code" autocomplete="one-time-code" />
+        </div>
+
+        <div id="emailCodeSection">
+          <button class="btn btn-secondary mb-2" id="sendEmailCodeBtn">Send Code to Email</button>
+          <input type="text" class="form-control" id="emailCode" placeholder="Enter code received by email" autocomplete="one-time-code" />
+        </div>
+
+        <button class="btn btn-primary mt-3" id="verify2FABtn">Verify 2FA</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
