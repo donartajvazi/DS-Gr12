@@ -247,7 +247,7 @@
                 showAlert("Login successful", "success");
                 $('#twoFactorModal').modal('hide');
                 setTimeout(() => {
-                    window.location.href = "/dashboard";
+                    window.location.href = "/index";
                 }, 1000);
             } else {
                 showModalAlert(res.message, "danger");

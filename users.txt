@@ -1,0 +1,12 @@
+[
+    {
+        "email": "donart.ajvazi@hotmail.com",
+        "password": "scrypt:32768:8:1$J3c3ifsVcCxfY9Ws$7c51d17c8505f66cb42c250d6fd314df8a8e287157d419789dd590d7a96c01ac026fd927b1e4f71e32f0e10fa075d795788c7a4faf8555aaaee5ff1715d6a240",
+        "totp_secret": "EJ5IJWHGZDIM2YZEJPCWICNIHHS7AJUC"
+    },
+    {
+        "email": "q@gmail.com",
+        "password": "scrypt:32768:8:1$5yHBdp0PC9wW5LCX$7adce38036fb7118bc21efdc30d344a47dee1055cba0c2781ce2fd77e5d3d54889083319c520e21cd1589830fd174bfb9b7aea4ed255273c9b6c9c87a69a4250",
+        "totp_secret": "2N73UFHYJQ7TEXQASGW32KNZNPNHLWT2"
+    }
+]

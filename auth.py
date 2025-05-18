@@ -28,7 +28,6 @@ if os.path.exists(DATABASE_FILE):
         except json.JSONDecodeError:
             users = []
 
-# G1
 @app.route('/')
 @app.route('/user_access')
 def user_access():
@@ -70,7 +69,6 @@ def login():
         return jsonify({"message": "Login successful"})
     return jsonify({"message": "Invalid credentials"}), 401
 
-# G1
 @app.route('/setup_totp', methods=['POST'])
 def setup_totp():
     email = request.form['email']
